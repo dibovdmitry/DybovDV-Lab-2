@@ -60,7 +60,7 @@ with mlflow.start_run():
     mlflow.log_artifacts("saved_model")
 ```
 ##### Результаты выполнения
-1. Установлены пакеты huggingface_hub, datasets, transformers, pandas, numpy. \ 
+1. Установлены пакеты huggingface_hub, datasets, transformers, pandas, numpy. \
 ![скриншот](report/Screenshot1.png "Рисунок") \
 Рисунок 1 – Установка пакетов 
 2. На Hugging Face Hub найден подходящий репозиторий модели и изучена модельная карточка. \
