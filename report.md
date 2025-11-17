@@ -62,63 +62,49 @@ with mlflow.start_run():
 ##### Результаты выполнения
 1. Установлены пакеты huggingface_hub, datasets, transformers, pandas, numpy. \ 
 ![скриншот](report/Screenshot1.png "Рисунок") \
-Рисунок 1 – Установка пакетов \
-
+Рисунок 1 – Установка пакетов 
 2. На Hugging Face Hub найден подходящий репозиторий модели и изучена модельная карточка. \
 ![скриншот](report/Screenshot2.png "Рисунок") \
-Рисунок 2 – Найденная модель на Hugging Face Hub \
-
+Рисунок 2 – Найденная модель на Hugging Face Hub 
 3. Создан hf_hub_exploration.py, выполнено скачивание модели/датасета и проверка содержимого. \
 ![скриншот](report/Screenshot4.png "Рисунок") \
-Рисунок 3 – Выполнение hf_hub_exploration.py \
-
+Рисунок 3 – Выполнение hf_hub_exploration.py 
 4. Создана папка проекта и resources.txt с записями выбранных ресурсов. \
 ![скриншот](report/Screenshot5.png "Рисунок") \
 Рисунок 4 – Создание проекта и resources.txt \
-
 ![скриншот](report/Screenshot6.png "Рисунок") \
-Рисунок 5 – Проверка содержимого resources.txt \
-
+Рисунок 5 – Проверка содержимого resources.txt 
 5. Создан fine_tuning.py, в коде использован параметр eval_training вместо evaluation_training, запущен тренинг. \
 ![скриншот](report/Screenshot8-1.png "Рисунок") \
 ![скриншот](report/Screenshot8-2.png "Рисунок") \
-Рисунок 6 – Запуск fine_tuning.py \
-
+Рисунок 6 – Запуск fine_tuning.py 
 7. Запущен MLflow Tracking Server, произведена интеграция через mlflow_integration.py. \
 ![скриншот](report/Screenshot9.png "Рисунок") \
-Рисунок 7 – MLflow Tracking Server \
-
+Рисунок 7 – MLflow Tracking Server 
 ![скриншот](report/Screenshot11.png "Рисунок") \
 Рисунок 8 – Выполнение mlflow_integration.py \
 7. В MLflow появился эксперимент Emotion-Classification-FineTuning с зафиксированными параметрами и метриками. \
 ![скриншот](report/Screenshot12.png "Рисунок") \
 Рисунок 9 – Эксперимент в MLflow \
-
 ![скриншот](report/Screenshot13.png "Рисунок") \
 Рисунок 10 – Все запуски скрипта \
-
 ![скриншот](report/Screenshot14.png "Рисунок") \
 Рисунок 11 – Полученные метрики \
-
 ![скриншот](report/Screenshot15.png "Рисунок") \
 Рисунок 12 – Параметры скрипта \
-
 ![скриншот](report/Screenshot16.png "Рисунок") \
 Рисунок 13 – Модели метрик \
-
 ![скриншот](report/Screenshot17.png "Рисунок") \
-Рисунок 14 –Содержимое вкладки Artifacts \
+Рисунок 14 –Содержимое вкладки Artifacts
 8. Проведён гиперпараметрический перебор (hyperparameter_tuning.py); запуски отображены в MLflow. \
 ![скриншот](report/Screenshot19.png "Рисунок") \
 Рисунок 15 – Запуск hyperparameter_tuning.py \
-
 ![скриншот](report/Screenshot20.png "Рисунок") \
-Рисунок 16 – Все запуски скрипта \
-
+Рисунок 16 – Все запуски скрипта
 9. Выполнен анализ результатов (analyze_results.py); получены таблицы и визуализации по метрикам. \
 ![скриншот](report/Screenshot23-1.png "Рисунок") \
 ![скриншот](report/Screenshot23-2.png "Рисунок") \
-Рисунок 17 – Анализ экспериментов \
+Рисунок 17 – Анализ экспериментов
 
 ##### Тестирование
 - [x] Модульные тесты — не применялись.
