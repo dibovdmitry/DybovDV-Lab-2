@@ -8,22 +8,18 @@ from transformers import (
     Trainer, 
     DataCollatorWithPadding, 
 ) 
-# Исправление: Импорт EvaluationStrategy из trainer_utils
 from transformers.trainer_utils import EvaluationStrategy 
 import numpy as np 
 from sklearn.metrics import accuracy_score, f1_score 
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
-# --- ГЛОБАЛЬНАЯ НАСТРОЙКА ---
 MODEL_NAME = "distilbert-base-uncased"
 NUM_LABELS = 6
 
-# Настройка MLflow (только URI и имя эксперимента, сами запуски будет делать hyperparameter_tuning.py)
 mlflow.set_tracking_uri("http://localhost:5000") 
 mlflow.set_experiment("Emotion-Classification-FineTuning") 
 
-# Глобальная инициализация токенизатора для эффективности
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
@@ -36,6 +32,7 @@ def compute_metrics(eval_pred):
     f1 = f1_score(labels, predictions, average="weighted") 
     return {"eval_accuracy": acc, "eval_f1_score": f1} 
 
+
 def tokenize_function(examples): 
     """Токенизирует текст."""
     return tokenizer( 
@@ -43,9 +40,8 @@ def tokenize_function(examples):
         truncation=True, 
         padding=True, 
         max_length=128 
-    ) 
-
-# --- ЭТАП 1: ОДНОРАЗОВАЯ ПОДГОТОВКА ДАННЫХ ПРИ ЗАГРУЗКЕ МОДУЛЯ ---
+    )
+    
 
 print("Загрузка и токенизация данных (происходит один раз)...")
 try:
@@ -58,9 +54,6 @@ except Exception as e:
     tokenized_datasets = None
 
 
-# --- ЭТАП 2: ФУНКЦИЯ ДЛЯ ЗАПУСКА ЭКСПЕРИМЕНТА ---
-
-# ИСПРАВЛЕНИЕ: Это функция, которую будет импортировать hyperparameter_tuning.py
 def train_model(learning_rate, batch_size=16, num_epochs=3, weight_decay=0.01):
     """
     Инициализирует, обучает и оценивает модель с заданным learning rate.
@@ -73,8 +66,7 @@ def train_model(learning_rate, batch_size=16, num_epochs=3, weight_decay=0.01):
     """
     if tokenized_datasets is None:
         return {"error": "Data not loaded"}
-        
-    # Параметры, специфичные для этого запуска
+
     model_params = { 
         "model_name": MODEL_NAME, 
         "num_labels": NUM_LABELS, 
@@ -84,7 +76,6 @@ def train_model(learning_rate, batch_size=16, num_epochs=3, weight_decay=0.01):
         "weight_decay": weight_decay 
     } 
     
-    # 1. Загрузка модели (пересоздается для каждого запуска, чтобы избежать утечек градиента)
     model = AutoModelForSequenceClassification.from_pretrained( 
         model_params["model_name"], 
         num_labels=model_params["num_labels"], 
@@ -93,7 +84,7 @@ def train_model(learning_rate, batch_size=16, num_epochs=3, weight_decay=0.01):
         label2id={'sadness': 0, 'joy': 1, 'love': 2, 'anger': 3, 'fear': 4, 'surprise': 5} 
     ) 
 
-    # 2. Настройка обучения (TrainingArguments)
+
     training_args = TrainingArguments( 
         output_dir=f"./results/lr_{learning_rate}", # Уникальная папка для каждого LR
         learning_rate=learning_rate, 
@@ -101,8 +92,6 @@ def train_model(learning_rate, batch_size=16, num_epochs=3, weight_decay=0.01):
         per_device_eval_batch_size=batch_size, 
         num_train_epochs=num_epochs, 
         weight_decay=weight_decay, 
-        
-        # Eval strategy должна совпадать с Save strategy, и имя аргумента должно быть 'eval_strategy'
         eval_strategy=EvaluationStrategy.EPOCH, # Оценка в конце каждой эпохи
         save_strategy="epoch",                   # Сохранение в конце каждой эпохи
         load_best_model_at_end=True,             # Загрузка лучшей модели в конце
@@ -114,7 +103,6 @@ def train_model(learning_rate, batch_size=16, num_epochs=3, weight_decay=0.01):
         seed=42
     ) 
     
-    # 3. Создание тренера
     trainer = Trainer( 
         model=model, 
         args=training_args, 
@@ -125,20 +113,14 @@ def train_model(learning_rate, batch_size=16, num_epochs=3, weight_decay=0.01):
         compute_metrics=compute_metrics, 
     ) 
 
-    # 4. Обучение
     print(f"Начало обучения для LR: {learning_rate}")
     trainer.train() 
 
-    # 5. Оценка на тестовом наборе (для получения окончательных метрик)
     test_results = trainer.evaluate(tokenized_datasets["test"], metric_key_prefix="test")
     
-    # 6. Сохранение и логирование модели (внутри этого вложенного запуска)
-    # Сохраняем модель локально
     model_path = f"./best_model_lr_{learning_rate}"
     trainer.save_model(model_path)
     
-    # Логируем лучшую модель в MLflow
-    # ИСПРАВЛЕНИЕ: Явно указываем 'task' для предотвращения сбоя при отсутствии связи с HF Hub
     mlflow.transformers.log_model( 
         transformers_model={ 
             "model": model, 
@@ -149,11 +131,9 @@ def train_model(learning_rate, batch_size=16, num_epochs=3, weight_decay=0.01):
         task="text-classification" # <-- Добавлено для явного указания задачи
     ) 
     
-    # 7. Регистрируем путь к чекпоинту как тег
     if trainer.state.best_model_checkpoint:
         mlflow.set_tag("best_checkpoint_path", trainer.state.best_model_checkpoint)
         
-    # 8. Возвращаем ТОЛЬКО ЧИСЛОВЫЕ метрики
     final_metrics = {
         **test_results,
         "best_validation_f1": trainer.state.best_metric,
