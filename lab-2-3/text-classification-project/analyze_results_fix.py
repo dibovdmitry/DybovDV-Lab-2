@@ -6,10 +6,7 @@ import warnings
 
 warnings.filterwarnings("ignore", category=UserWarning)
 
-# --- 1. Настройка URI ---
-# URI должен совпадать с тем, что используется в mlflow_integration_fix.py
 TRACKING_URI = "http://localhost:5000"
-# ИСПРАВЛЕНИЕ: Используем корректное имя эксперимента с дефисами для соответствия mlflow_integration_fix.py
 EXPERIMENT_NAME = "Emotion-Classification-FineTuning"
 
 mlflow.set_tracking_uri(TRACKING_URI)
@@ -18,8 +15,6 @@ client = MlflowClient()
 print(f"Подключение к MLflow на URI: {TRACKING_URI}")
 print(f"Поиск эксперимента: '{EXPERIMENT_NAME}'")
 
-# --- 2. Поиск и Валидация Эксперимента ---
-# ИСПРАВЛЕНИЕ: Добавлен set_tracking_uri, чтобы обеспечить подключение к серверу
 experiment = client.get_experiment_by_name(EXPERIMENT_NAME)
 
 if experiment is None:
@@ -28,7 +23,6 @@ if experiment is None:
     print("1. MLflow Tracking Server (mlflow ui) не запущен по адресу http://localhost:5000.")
     print("2. В файле 'hyperparameter_tuning.py' еще не было запусков, которые бы создали этот эксперимент.")
     
-    # Попытка создать эксперимент, чтобы избежать сбоя
     try:
         experiment_id = client.create_experiment(EXPERIMENT_NAME)
         experiment = client.get_experiment(experiment_id)
@@ -38,8 +32,6 @@ if experiment is None:
         # Завершаем скрипт, если не удалось ни найти, ни создать
         exit(1)
 
-# --- 3. Анализ Запусков ---
-# Используем experiment.experiment_id, который теперь гарантированно не None
 runs = client.search_runs(
     experiment_ids=[experiment.experiment_id],
     # ИСПРАВЛЕНИЕ: Сортируем по Best Validation F1, т.к. это основная метрика
