@@ -29,35 +29,67 @@
 ##### Ключевые фрагменты кода
 - Скрипт hf_hub_exploration.py:
 ```python
-# Пример интеграции тренировки с MLflow (схематично)
-from transformers import Trainer, TrainingArguments, AutoModelForSequenceClassification, AutoTokenizer
-import mlflow
+from datasets import load_dataset
+from huggingface_hub import list_models, list_datasets
+import pandas as pd
 
-mlflow.set_tracking_uri("http://localhost:5000")
-mlflow.set_experiment("Emotion-Classification-FineTuning")
+print("Available datasets for text classification:")
+datasets = list_datasets(filter="task_categories:text-classification")
+for dataset in datasets:
+	print(f"- {dataset.id}")
 
-tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-model = AutoModelForSequenceClassification.from_pretrained("bert-base-uncased", num_labels=6)
+print("\nUloading dataset emotion...")
+dataset = load_dataset("emotion")
 
-training_args = TrainingArguments(
-    output_dir="./outputs",
-    evaluation_strategy="epoch",
-    per_device_train_batch_size=16,
-    per_device_eval_batch_size=32,
-    num_train_epochs=3,
-    logging_steps=50,
-    save_steps=500,
+print(f"\nDataset structure: {dataset}")
+print(f"\nExamples from train split:")
+train_df = pd.DataFrame(dataset['train'][:5])
+print(train_df)
+
+print("\nClass distribution in the training data:")
+label_counts = pd.Series(dataset['train']['label']).value_counts()
+print(label_counts)
+
+print("\n\nAvailable models for text classification:")
+models = list_models(
+	filter="task:text-classification",
+	sort="downloads",
+	direction=-1,
+	limit=5
 )
 
-with mlflow.start_run():
-    mlflow.log_param("model_name", "bert-base-uncased")
-    mlflow.log_param("epochs", training_args.num_train_epochs)
-    trainer = Trainer(model=model, args=training_args, train_dataset=train_dataset, eval_dataset=eval_dataset, compute_metrics=compute_metrics)
-    trainer.train()
-    metrics = trainer.evaluate()
-    mlflow.log_metrics(metrics)
-    trainer.save_model("saved_model")
-    mlflow.log_artifacts("saved_model")
+for model in models:
+	print(f"\nModel: {model.id}")
+	print(f"\nDownloads: {model.downloads}")
+	print(f"\nTags: {model.tags}")
+	if model.pipeline_tag:
+		print(f"Task type: {model.pipeline_tag}")
+
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+
+model_name = "distilbert-base-uncased"
+print(f"\nLoading the model {model_name}...")
+
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModelForSequenceClassification.from_pretrained(
+	model_name,
+	num_labels=6 #Num of classes in dataset
+)
+
+print("The model and tokenizer have been successfully loaded!")
+print(f"Dictionary size: {tokenizer.vocab_size}")
+print(f"Model architecture: {model.__class__.__name__}")
+
+test_text = "i am feeling grouchy"
+print(f"Text for test: {test_text}")
+
+tokens = tokenizer(test_text, return_tensors="pt")
+print(f"Tokens: {tokens}")
+print(f"Decoration tokens: {tokenizer.decode(tokens['input_ids'][0])}")
+```
+- Скрипт hf_hub_exploration.py:
+```python
+
 ```
 ##### Результаты выполнения
 1. Установлены пакеты huggingface_hub, datasets, transformers, pandas, numpy. \
